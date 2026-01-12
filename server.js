@@ -10,7 +10,7 @@ const users = [
   { id: 2, name: "Nino", role: "User", age: 22 },
   { id: 3, name: "Anna", role: "Editor", age: 24 },
 ];
-
+app.use(express.json()); // middleware
 app.get("/", (req, res) => {
   res.send("Send only returns string");
 });
@@ -35,8 +35,23 @@ app.get("/about", (req, res) => {
     return res.json(users);
   }
 });
+app.get("/api/users", (req, res) => {
+  res.json(users);
+});
+// in order to check Our CRUD does it function or not we I use vscode extenshion thunder client, now I will start the post method
+app.post("/api/users", (req, res) => {
+  const newUser = req.body; // in order this to work we need middleware app.use(express.json());
+  if (!newUser.name) {
+    return res.status(404).json({ message: "Name is necessary" });
+  }
+  newUser.id = users.length + 1; // since currently we do not use database , I will create id like this
+  users.push(newUser);
+  return res
+    .status(201)
+    .json({ message: "Succesfully added the user", user: users });
+});
 app.listen(port, () => {
   console.log(`Server: http://localhost:${port}/about?age=22`);
-  console.log(`About:  http://localhost:${port}/api/users/1`);
+  console.log(`About:  http://localhost:${port}/api/users`);
 });
 // in order to install nodemon you must know that nodemon is a dev dependency, it will not be used when project starts so we have to install --save-dev by simply writing -D

@@ -9,7 +9,7 @@ const createFile = async () => {
     await fs.appendFile(direction, "//This text is added in the created file");
     const readFile = await fs.readFile(direction, "utf-8");
     console.log(readFile);
-    await fs.unlink("folder/Remove.js");
+    // await fs.unlink("folder/Remove.js");
   } catch (error) {
     console.error(error);
   }

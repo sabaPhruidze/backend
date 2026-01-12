@@ -7,9 +7,9 @@ const createFile = async () => {
     const direction = path.join(__dirname, "server.js");
     await fs.writeFile(direction, "//Hi file is created");
     await fs.appendFile(direction, "//This text is added in the created file");
-    const readFile = fs.readFile(direction, "utf-8");
+    const readFile = await fs.readFile(direction, "utf-8");
     console.log(readFile);
-    await fs.unlink("folder/forRemove.js");
+    await fs.unlink("folder/Remove.js");
   } catch (error) {
     console.error(error);
   }

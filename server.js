@@ -1,4 +1,3 @@
-//@ts-check
 //here we will import .dotenv in order to than use hidden Token, secret keys and port using process.env
 require("dotenv").config();
 // //let's install express in order to make the process of creating server easier
@@ -9,14 +8,23 @@ const port = process.env.PORT || 3000;
 app.get("/", (req, res) => {
   res.send("Send only returns string");
 });
-app.get("/about", (req, res) => {
-  const user = [
-    { id: 1, name: "Saba" },
-    { id: 2, name: "Tofu" },
+app.get("/api/users/:id", (req, res) => {
+  // let's change this and make dynamic
+  const users = [
+    { id: 1, name: "Kate", role: "Admin", age: 25 },
+    { id: 2, name: "Nino", role: "User", age: 22 },
+    { id: 3, name: "Anna", role: "Editor", age: 24 },
   ];
-  res.json(user); //We use not send but json for returning object and arrays
+  const currentId = parseInt(req.params.id);
+  const concreteUser = users.find((user) => user.id === currentId); // currently am not using typescript here
+  if (!concreteUser) {
+    res
+      .status(404)
+      .json({ message: `cannot find user with the id: ${currentId}` });
+  }
+  res.json(concreteUser); //We use not send but json for returning object and arrays
 });
 app.listen(port, () => {
   console.log(`Server: http://localhost:${port}`);
-  console.log(`About:  http://localhost:${port}/about`);
+  console.log(`About:  http://localhost:${port}/api/users/1`);
 });

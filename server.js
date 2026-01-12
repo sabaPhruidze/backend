@@ -1,1 +1,2 @@
-//Hi file is created//This text is added in the created file
+//here we will import .dotenv in order to than use hidden Token, secret keys and port using process.env
+require(".dotenv").config();

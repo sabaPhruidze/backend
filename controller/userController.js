@@ -7,7 +7,7 @@ const users = [
 const getUsers = (req, res) => {
   res.json(users);
 };
-const createUsers = (req, res) => {
+const createUser = (req, res) => {
   const newUser = req.body; // in order this to work we need middleware app.use(express.json());
   if (!newUser.name) {
     return res.status(404).json({ message: "Name is necessary" });
@@ -19,7 +19,7 @@ const createUsers = (req, res) => {
     .json({ message: "Succesfully added the user", user: users });
 };
 
-const changeUsers = (req, res) => {
+const changeUser = (req, res) => {
   const userId = parseInt(req.params.id);
   const user = users.find((u) => u.id === userId);
   if (!user) {
@@ -37,7 +37,7 @@ const changeUsers = (req, res) => {
   }
   return res.status(200).json({ message: "succesfully updated", user: user });
 };
-const deleteUsers = (req, res) => {
+const deleteUser = (req, res) => {
   const userId = parseInt(req.params.id);
   const findIndex = users.findIndex((u) => u.id === userId);
   if (findIndex === -1) {
@@ -49,3 +49,4 @@ const deleteUsers = (req, res) => {
     user: removeUser,
   });
 };
+module.exports = { getUsers, createUser, changeUser, deleteUser };

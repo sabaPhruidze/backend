@@ -5,11 +5,6 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
 
-const users = [
-  { id: 1, name: "Kate", role: "Admin", age: 22 },
-  { id: 2, name: "Nino", role: "User", age: 22 },
-  { id: 3, name: "Anna", role: "Editor", age: 24 },
-];
 app.use(express.json()); // middleware
 app.get("/", (req, res) => {
   res.send("Send only returns string");
@@ -35,51 +30,11 @@ app.get("/about", (req, res) => {
     return res.json(users);
   }
 });
-app.get("/api/users", (req, res) => {
-  res.json(users);
-});
+app.get("/api/users");
 // in order to check Our CRUD does it function or not we I use vscode extenshion thunder client, now I will start the post method
-app.post("/api/users", (req, res) => {
-  const newUser = req.body; // in order this to work we need middleware app.use(express.json());
-  if (!newUser.name) {
-    return res.status(404).json({ message: "Name is necessary" });
-  }
-  newUser.id = users.length + 1; // since currently we do not use database , I will create id like this
-  users.push(newUser);
-  return res
-    .status(201)
-    .json({ message: "Succesfully added the user", user: users });
-});
-app.patch("/api/users/:id", (req, res) => {
-  const userId = parseInt(req.params.id);
-  const user = users.find((u) => u.id === userId);
-  if (!user) {
-    return res.status(404).json({ message: "User does not exist" });
-  }
-  if (!user.name) {
-    return res.status(400).json({ message: "User name is necessary" });
-  }
-  user.name = req.body.name;
-  if (user.role) {
-    user.role = req.body.role;
-  }
-  if (user.age) {
-    user.age = req.body.age;
-  }
-  return res.status(200).json({ message: "succesfully updated", user: user });
-});
-app.delete("/api/users/:id", (req, res) => {
-  const userId = parseInt(req.params.id);
-  const findIndex = users.findIndex((u) => u.id === userId);
-  if (findIndex === -1) {
-    return res.status(404).json({ message: "User does not exit" });
-  }
-  const removeUser = users.splice(findIndex, 1);
-  return res.json({
-    message: "მომხმარებელი წარმატებით წაიშალა",
-    user: removeUser,
-  });
-});
+app.post("/api/users");
+app.put("/api/users/:id");
+app.delete("/api/users/:id");
 app.listen(port, () => {
   console.log(`Server: http://localhost:${port}/about?age=22`);
   console.log(`About:  http://localhost:${port}/api/users`);

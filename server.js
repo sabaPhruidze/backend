@@ -68,6 +68,18 @@ app.patch("/api/users/:id", (req, res) => {
   }
   return res.status(200).json({ message: "succesfully updated", user: user });
 });
+app.delete("/api/users/:id", (req, res) => {
+  const userId = parseInt(req.params.id);
+  const findIndex = users.findIndex((u) => u.id === userId);
+  if (findIndex === -1) {
+    return res.status(404).json({ message: "User does not exit" });
+  }
+  const removeUser = users.splice(findIndex, 1);
+  return res.json({
+    message: "მომხმარებელი წარმატებით წაიშალა",
+    user: removeUser,
+  });
+});
 app.listen(port, () => {
   console.log(`Server: http://localhost:${port}/about?age=22`);
   console.log(`About:  http://localhost:${port}/api/users`);

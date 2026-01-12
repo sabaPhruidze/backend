@@ -1,52 +1,46 @@
-const users = [
-  { id: 1, name: "Kate", role: "Admin", age: 22 },
-  { id: 2, name: "Nino", role: "User", age: 22 },
-  { id: 3, name: "Anna", role: "Editor", age: 24 },
-];
+const User = require("../models/userModels");
 
-const getUsers = (req, res) => {
-  res.json(users);
-};
-const createUser = (req, res) => {
-  const newUser = req.body; // in order this to work we need middleware app.use(express.json());
-  if (!newUser.name) {
-    return res.status(404).json({ message: "Name is necessary" });
+const getUsers = async (req, res) => {
+  try {
+    const allUsers = await User.find(); // it will give back all the users from db
+    res.status(200).json(allUsers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-  newUser.id = users.length + 1; // since currently we do not use database , I will create id like this
-  users.push(newUser);
-  return res
-    .status(201)
-    .json({ message: "Succesfully added the user", user: users });
+};
+const createUser = async (req, res) => {
+  try {
+    const newUser = await User.create(req.body); //simply writing create that's all all check goes to mongoose schema
+    return res.status(201).json(newUser);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 };
 
-const changeUser = (req, res) => {
-  const userId = parseInt(req.params.id);
-  const user = users.find((u) => u.id === userId);
-  if (!user) {
-    return res.status(404).json({ message: "User does not exist" });
+const updateUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!user) {
+      return res.status(404).json({ message: "user does not exist" });
+    } else {
+      return res.status(200).json(user);
+    }
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
   }
-  if (!user.name) {
-    return res.status(400).json({ message: "User name is necessary" });
-  }
-  user.name = req.body.name;
-  if (user.role) {
-    user.role = req.body.role;
-  }
-  if (user.age) {
-    user.age = req.body.age;
-  }
-  return res.status(200).json({ message: "succesfully updated", user: user });
 };
-const deleteUser = (req, res) => {
-  const userId = parseInt(req.params.id);
-  const findIndex = users.findIndex((u) => u.id === userId);
-  if (findIndex === -1) {
-    return res.status(404).json({ message: "User does not exit" });
+const deleteUser = async (req, res) => {
+  try {
+    const user = await findbyIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "user does not exist" });
+    } else {
+      return res.status(200).json(user);
+    }
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
   }
-  const removeUser = users.splice(findIndex, 1);
-  return res.json({
-    message: "მომხმარებელი წარმატებით წაიშალა",
-    user: removeUser,
-  });
 };
-module.exports = { getUsers, createUser, changeUser, deleteUser };
+module.exports = { getUsers, createUser, updateUser, deleteUser };

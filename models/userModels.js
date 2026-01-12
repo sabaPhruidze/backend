@@ -10,6 +10,10 @@ const userSchema = mongoose.Schema(
       required: [true, "Email is necessary"],
       unique: true, //there has to be no identical emails
     },
+    password: {
+      type: String,
+      required: [true, "Password is necesarry"],
+    },
     role: {
       type: String,
       default: "user",

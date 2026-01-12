@@ -2,9 +2,10 @@
 require("dotenv").config();
 // //let's install express in order to make the process of creating server easier
 const express = require("express");
+const connectDB = require("./config/db");
 const app = express();
 const port = process.env.PORT || 3000;
-
+connectDB();
 app.use(express.json()); // middleware
 
 const userRoutes = require("./routes/userRoutes");

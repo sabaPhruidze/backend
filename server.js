@@ -50,6 +50,24 @@ app.post("/api/users", (req, res) => {
     .status(201)
     .json({ message: "Succesfully added the user", user: users });
 });
+app.patch("/api/users/:id", (req, res) => {
+  const userId = parseInt(req.params.id);
+  const user = users.find((u) => u.id === userId);
+  if (!user) {
+    return res.status(404).json({ message: "User does not exist" });
+  }
+  if (!user.name) {
+    return res.status(400).json({ message: "User name is necessary" });
+  }
+  user.name = req.body.name;
+  if (user.role) {
+    user.role = req.body.role;
+  }
+  if (user.age) {
+    user.age = req.body.age;
+  }
+  return res.status(200).json({ message: "succesfully updated", user: user });
+});
 app.listen(port, () => {
   console.log(`Server: http://localhost:${port}/about?age=22`);
   console.log(`About:  http://localhost:${port}/api/users`);

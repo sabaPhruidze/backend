@@ -28,3 +28,4 @@ app.listen(port, () => {
   console.log(`Server: http://localhost:${port}`);
   console.log(`About:  http://localhost:${port}/api/users/1`);
 });
+// in order to install nodemon you must know that nodemon is a dev dependency, it will not be used when project starts so we have to install --save-dev by simply writing -D

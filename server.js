@@ -5,13 +5,15 @@ const express = require("express");
 const connectDB = require("./config/db");
 const app = express();
 const port = process.env.PORT || 3000;
+const fsRoutes = require("./routes/fsRoutes");
+
 connectDB();
 app.use(express.json()); // middleware
 
 const userRoutes = require("./routes/userRoutes");
 
 app.use("/api/users", userRoutes);
-
+app.use("/api/fs", fsRoutes);
 app.listen(port, () => {
   console.log(`Server: http://localhost:${port}/about?age=22`);
   console.log(`About:  http://localhost:${port}/api/users`);

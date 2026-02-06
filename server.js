@@ -23,7 +23,6 @@ const userRoutes = require("./routes/userRoutes");
 
 app.use("/api/users", userRoutes);
 app.use("/api/fs", fsRoutes);
-nonExistentFunction();
 
 app.listen(port, () => {
   console.log(`Server: http://localhost:${port}/about?age=22`);

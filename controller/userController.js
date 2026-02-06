@@ -1,6 +1,7 @@
 const User = require("../models/userModels");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+console.log(process.cwd());
 const getUsers = async (req, res) => {
   try {
     const allUsers = await User.find(); // it will give back all the users from db

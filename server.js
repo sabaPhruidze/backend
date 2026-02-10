@@ -9,6 +9,7 @@ process.on("unhandledRejection", (err) => {
 });
 //here we will import .dotenv in order to than use hidden Token, secret keys and port using process.env
 require("dotenv").config();
+const assert = require("assert");
 // //let's install express in order to make the process of creating server easier
 const express = require("express");
 const connectDB = require("./config/db");
@@ -23,7 +24,7 @@ const userRoutes = require("./routes/userRoutes");
 
 app.use("/api/users", userRoutes);
 app.use("/api/fs", fsRoutes);
-
+assert(process.env.JWT_SECRET, "JWT_SECRET IS IMPORTANT");
 app.listen(port, () => {
   console.log(`Server: http://localhost:${port}/about?age=22`);
   console.log(`About:  http://localhost:${port}/api/users`);

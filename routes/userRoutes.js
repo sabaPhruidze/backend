@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const userController = require("../controller/userController");
-const { registerSchema } = require("../validation/userSchemas");
+const { registerSchema } = require("../validation/userSchema");
 
 const { protect } = require("../middleware/authMiddleware");
 const validate = require("../middleware/validate");

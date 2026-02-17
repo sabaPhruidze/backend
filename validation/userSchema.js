@@ -31,8 +31,17 @@ const userQuerySchema = z
   .object({
     search: z.string().trim().min(1).optional(),
     role: z.enum(["user", "admin"]).optional(),
-    page: z.coerce.number().int().min(1).optional(), // z.coerce.number() string to number
-    limit: z.coerce.number().int().min(1).max(100).optional(), //int() X-2.5 O-2
+    page: z.coerce
+      .number({ invalid_type_error: "write number only" })
+      .int("it must be 1,2,3... not 2.5 , 344.24234234")
+      .min(1)
+      .optional(), // z.coerce.number() string to number
+    limit: z.coerce
+      .number({ invalid_type_error: "write number only" }) // for not allowing other than number
+      .int("it must be 1,2,3... not 2.5 , 344.24234234")
+      .min(1)
+      .max(100)
+      .optional(), //int() X-2.5 O-2
   })
   .strict(); // if there be a parameter that is not within schema it will not allow
 

@@ -3,13 +3,13 @@ const express = require("express");
 const router = express.Router();
 
 const userController = require("../controller/userController");
-const { registerSchema } = require("../validation/userSchema");
+const { loginSchema, registerSchema } = require("../validation/userSchema");
 
 const { protect } = require("../middleware/authMiddleware");
 const validate = require("../middleware/validate");
 
 router.get("/", userController.getUsers);
-router.post("/login", userController.loginUsers);
+router.post("/login", validate(loginSchema), userController.loginUsers);
 router.post(
   "/register",
   validate(registerSchema),

@@ -13,3 +13,4 @@ const validateQuery = (schema) => (req, res, next) => {
   req.query = result.data;
   next();
 };
+module.exports = validateQuery;

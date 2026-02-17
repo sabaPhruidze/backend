@@ -14,3 +14,4 @@ const validateParams = (schema) => (req, res, next) => {
   req.params = result.data;
   next();
 };
+module.exports = validateParams;

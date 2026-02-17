@@ -3,12 +3,20 @@ const express = require("express");
 const router = express.Router();
 
 const userController = require("../controller/userController");
-const { loginSchema, registerSchema } = require("../validation/userSchema");
+const {
+  loginSchema,
+  registerSchema,
+  userIdParamSchema,
+  userQuerySchema,
+} = require("../validation/userSchema");
 
 const { protect } = require("../middleware/authMiddleware");
 const validate = require("../middleware/validate");
+const validateQuery = require("../middleware/validateQuery");
+const validateParams = require("../middleware/validateParams");
 
-router.get("/", userController.getUsers);
+router.get("/", validateQuery(userQuerySchema), userController.getUsers);
+router.get("/:id", validateParams(userIdParamSchema), userController.getUsers);
 router.post("/login", validate(loginSchema), userController.loginUsers);
 router.post(
   "/register",

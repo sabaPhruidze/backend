@@ -66,19 +66,29 @@ const registerUsers = async (req, res) => {
 const loginUsers = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (user && (await bcrypt.compare(password, user.password))) {
-      res.json({
-        _id: user.id,
-        name: user.name,
-        email: user.email,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(400).json({ message: "Email or password is incorrect" });
+    const user = await User.findOne({ email }).select("+password");
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "Email or Password is not correct" });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ message: "Email or Password is not correct" });
+    }
+
+    return res.status(200).json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      token: generateToken(user._id),
+    });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 const updateUser = async (req, res) => {

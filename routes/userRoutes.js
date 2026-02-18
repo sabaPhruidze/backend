@@ -16,7 +16,7 @@ const validateQuery = require("../middleware/validateQuery");
 const validateParams = require("../middleware/validateParams");
 
 router.get("/", validateQuery(userQuerySchema), userController.getUsers);
-router.get("/:id", validateParams(userIdParamSchema), userController.getUsers);
+// router.get("/:id", validateParams(userIdParamSchema), userController.getUsers);
 router.post("/login", validate(loginSchema), userController.loginUsers);
 router.post(
   "/register",

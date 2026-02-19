@@ -18,8 +18,8 @@ const validateParams = require("../middleware/validateParams");
 router.get("/", validateQuery(userQuerySchema), userController.getUsers);
 router.get(
   "/:id",
-  protect,
   validateParams(userIdParamSchema),
+  protect,
   userController.getUserById,
 );
 router.post("/login", validate(loginSchema), userController.loginUsers);

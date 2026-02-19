@@ -4,7 +4,7 @@ const path = require("path");
 
 const createFile = async () => {
   try {
-    const direction = path.join(__dirname, "server.js");
+    const direction = path.join(__dirname, "createdFile.txt");
     await fs.writeFile(direction, "//Hi file is created");
     await fs.appendFile(direction, "//This text is added in the created file");
     const readFile = await fs.readFile(direction, "utf-8");

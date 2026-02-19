@@ -140,4 +140,5 @@ module.exports = {
   loginUsers,
   updateUser,
   deleteUser,
+  getUserById,
 };

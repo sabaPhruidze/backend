@@ -1,25 +1,21 @@
-const validate = (schema) => (req, res, next) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.validate = void 0;
+const validate = (schema, target = "body", label) => (req, res, next) => {
     //schema is registerSchema from userSchema at this moment passed through using routes futture
     // this result will return { success: true, data } or { success: false, error }
-    const result = schema.safeParse(req.body);
+    const result = schema.safeParse(req[target]);
     if (!result.success) {
-        //{ success: false, error }
-        const errors = result.error.issues.map((issue) => ({
-            // sample [
-            // { path: ["name"], message: "Name must be at least 2 characters", ... },
-            // { path: ["email"], message: "Invalid email format", ... },
-            // { path: ["password"], message: "Password must be at least 8 characters", ... }
-            //]
-            path: issue.path.join("."),
-            message: issue.message,
-        }));
         return res.status(400).json({
-            message: "Validation Errors",
-            errors,
+            message: label ?? `${target} validation errors`,
+            errors: result.error.issues.map((issue) => ({
+                path: issue.path.join("."),
+                message: issue.message,
+            })),
         });
     }
     //{ success: true, data }
-    req.body = result.data; //Text will be trimmed , no additional fields and no additional check in controller anymore
+    req[target] = result.data; //Text will be trimmed , no additional fields and no additional check in controller anymore
     next();
 };
-module.exports = validate;
+exports.validate = validate;

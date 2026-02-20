@@ -22,7 +22,7 @@ const fsRoutes = require("./routes/fsRoutes");
 connectDB();
 app.use(express.json()); // middleware
 
-const userRoutes = require("./routes/userRoutes");
+import userRoutes from "./routes/userRoutes";
 
 app.use("/api/users", userRoutes);
 app.use("/api/fs", fsRoutes);

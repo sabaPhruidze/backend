@@ -4,9 +4,9 @@ import { z } from "zod";
 export const registerSchema = z
   .object({
     name: z
-      .string("Name is required")
+      .string()
       .trim()
-      .min(2, "Name must be at least 2 characters")
+      .min(2, "Name is required")
       .max(30, "Name must be at most 30 characters"),
     email: z
       .email("Invalid Email format")
@@ -33,13 +33,11 @@ export const userQuerySchema = z
     role: z.enum(["user", "admin"]).optional(),
     page: z.coerce
       .number()
-      .refine((v) => Number.isFinite(v), { message: "write number only" })
       .int("it must be 1,2,3... not 2.5 , 344.24234234")
       .min(1)
       .optional(), // z.coerce.number() string to number
     limit: z.coerce
-      .number() // for not allowing other than number (since it has to be number we give it with refine because z.coerce.number() turn in nubmer)
-      .refine((v) => Number.isFinite(v), { message: "write number only" })
+      .number() // if string didn't turn into the number than zod by itself cause an error
       .int("it must be 1,2,3... not 2.5 , 344.24234234")
       .min(1)
       .max(100)
@@ -47,6 +45,6 @@ export const userQuerySchema = z
   })
   .strict(); // if there be a parameter that is not within schema it will not allow
 export type RegisterBody = z.infer<typeof registerSchema>;
-export type LoginSchema = z.infer<typeof loginSchema>;
+export type LoginBody = z.infer<typeof loginSchema>;
 export type USerIdParams = z.infer<typeof userIdParamSchema>;
 export type UserQuery = z.infer<typeof userQuerySchema>;

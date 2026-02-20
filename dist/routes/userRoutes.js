@@ -1,16 +1,18 @@
-//@ts-check
-const express = require("express");
-const router = express.Router();
-const userController = require("../controller/userController");
-const { loginSchema, registerSchema, userIdParamSchema, userQuerySchema, } = require("../validation/userSchema");
-const { protect } = require("../middleware/authMiddleware");
-const validate = require("../middleware/validate");
-const validateQuery = require("../middleware/validateQuery");
-const validateParams = require("../middleware/validateParams");
-router.get("/", validateQuery(userQuerySchema), userController.getUsers);
-router.get("/:id", validateParams(userIdParamSchema), protect, userController.getUserById);
-router.post("/login", validate(loginSchema), userController.loginUsers);
-router.post("/register", validate(registerSchema), userController.registerUsers);
-router.put("/:id", protect, userController.updateUser);
-router.delete("/:id", protect, userController.deleteUser);
-module.exports = router;
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const userController_1 = __importDefault(require("../controller/userController"));
+const userSchema_1 = require("../validation/userSchema");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const validate_1 = require("../middleware/validate");
+const router = (0, express_1.Router)();
+router.get("/", (0, validate_1.validate)(userSchema_1.userQuerySchema, "query", "Query Validation Errors"), userController_1.default.getUsers);
+router.get("/:id", (0, validate_1.validate)(userSchema_1.userIdParamSchema, "params", "Params Validation Errors"), authMiddleware_1.protect, userController_1.default.getUserById);
+router.post("/login", (0, validate_1.validate)(userSchema_1.loginSchema, "body", "Validation Errors"), userController_1.default.loginUsers);
+router.post("/register", (0, validate_1.validate)(userSchema_1.registerSchema, "body", "Validation Errors"), userController_1.default.registerUsers);
+router.put("/:id", authMiddleware_1.protect, userController_1.default.updateUser);
+router.delete("/:id", authMiddleware_1.protect, userController_1.default.deleteUser);
+exports.default = router;

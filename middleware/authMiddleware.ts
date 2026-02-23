@@ -1,23 +1,36 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/userModels");
+import type { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import User from "../models/userModels";
 
-const protect = async (req, res, next) => {
-  let token;
+type JWTPayLoad = {
+  id: string;
+};
+export const protect = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "There is not token" });
+  } //token must start with Bearer
 
-  if (req.headers.authorization?.startsWith("Bearer")) {
-    try {
-      token = req.headers.authorization.split(" ")[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      req.user = await User.findById(decoded.id).select("-password");
-      return next();
-    } catch (error) {
-      console.error(error);
+  try {
+    const token = auth.split(" ")[1];
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(500).json({ message: "JWT_SECRET is missing" });
+    }
+    const decoded = jwt.verify(token, secret) as JWTPayLoad;
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
       return res.status(401).json({ message: "not authorized" });
     }
+    req.user = user;
+    return next();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(message);
+    return res.status(401).json({ message: "not authorized" });
   }
-
-  return res.status(401).json({ message: "There is no token" });
 };
-
-module.exports = { protect };

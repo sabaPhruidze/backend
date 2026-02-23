@@ -1,3 +1,12 @@
+//here we will import .dotenv in order to than use hidden Token, secret keys and port using process.env
+import "dotenv/config";
+import assert from "assert";
+// //let's install express in order to make the process of creating server easier
+import express from "express";
+import connectDB from "./config/db";
+import fsRoutes from "./routes/fsRoutes";
+import userRoutes from "./routes/userRoutes";
+
 //testing how the uncaughtExpection and unhandled rejection works
 process.on("uncaughtException", (err: unknown) => {
   const message = err instanceof Error ? err.message : String(err);
@@ -9,21 +18,11 @@ process.on("unhandledRejection", (err: unknown) => {
   console.error("unhandled promise rejection", message);
   process.exit(1);
 });
-//here we will import .dotenv in order to than use hidden Token, secret keys and port using process.env
-require("dotenv").config();
-const assert = require("assert");
-// //let's install express in order to make the process of creating server easier
-const express = require("express");
-const connectDB = require("./config/db");
-const app = express();
-const port = process.env.PORT || 3000;
-const fsRoutes = require("./routes/fsRoutes");
 
 connectDB();
-app.use(express.json()); // middleware
-
-import userRoutes from "./routes/userRoutes";
-
+const app = express();
+const port = process.env.PORT;
+app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/fs", fsRoutes);
 assert(process.env.JWT_SECRET, "JWT_SECRET IS IMPORTANT");

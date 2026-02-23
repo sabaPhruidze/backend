@@ -13,7 +13,7 @@
 
     "esModuleInterop": true,
     "resolveJsonModule": true,
-
+    "noImplicitAny": true, //by this errors will be displayed but not as much as strict
     "strict": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true

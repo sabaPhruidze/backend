@@ -5,7 +5,7 @@ const connectDB = async (): Promise<void> => {
     if (!mongoUri) {
       throw new Error("MONGO_URI is missing in environment variables");
     }
-    const conn = await mongoose.connect(process.env.MONGO_URI);
+    const conn = await mongoose.connect(process.env.MONGO_URI || "");
     console.log(`connected succesfully ${conn.connection.host}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

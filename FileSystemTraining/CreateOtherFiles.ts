@@ -1,8 +1,8 @@
 //@ts-check
-const fs = require("fs").promises;
-const path = require("path");
+import { promises as fs } from "fs";
+import path from "path";
 
-const createFile = async () => {
+const createFile = async (): Promise<void> => {
   try {
     const direction = path.join(__dirname, "createdFile.txt");
     await fs.writeFile(direction, "//Hi file is created");
@@ -11,7 +11,8 @@ const createFile = async () => {
     console.log(readFile);
     // await fs.unlink("folder/Remove.js");
   } catch (error) {
-    console.error(error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(message);
   }
 };
 createFile();

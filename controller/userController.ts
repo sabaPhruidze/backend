@@ -3,6 +3,7 @@ import User from "../models/userModels";
 import { RegisterBody, type UserQuery } from "../validation/userSchema";
 import { LoginBody } from "../validation/userSchema";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 console.log(process.cwd());
 
 const getUsers = async (req: Request, res: Response) => {
@@ -128,8 +129,12 @@ const deleteUser = async (req: Request, res: Response) => {
     return res.status(400).json({ message });
   }
 };
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+const generateToken = (id: string) => {
+  const secret = process.env.JTW_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET is missing");
+  }
+  return jwt.sign({ id }, secret, {
     expiresIn: "30d",
   });
 };

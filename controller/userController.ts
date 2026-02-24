@@ -100,7 +100,8 @@ const loginUsers = async (req: Request, res: Response) => {
 };
 const updateUser = async (req: Request, res: Response) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const { id } = req.params as { id: string };
+    const user = await User.findByIdAndUpdate(id, req.body, {
       new: true,
     });
     if (!user) {
@@ -108,20 +109,23 @@ const updateUser = async (req: Request, res: Response) => {
     } else {
       return res.status(200).json(user);
     }
-  } catch (error) {
-    return res.status(400).json({ message: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return res.status(400).json({ message });
   }
 };
 const deleteUser = async (req: Request, res: Response) => {
   try {
-    const user = await User.findbyIdAndDelete(req.params.id);
+    const { id } = req.params as { id: string };
+    const user = await User.findByIdAndDelete(id);
     if (!user) {
       return res.status(404).json({ message: "user does not exist" });
     } else {
       return res.status(200).json(user);
     }
-  } catch (error) {
-    return res.status(400).json({ message: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return res.status(400).json({ message });
   }
 };
 const generateToken = (id) => {

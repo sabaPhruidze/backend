@@ -7,7 +7,7 @@
     "allowSyntheticDefaultImports": true,
     "rootDir": ".",
     "outDir": "dist",
-
+    "typeRoots": ["./types", "./node_modules/@types"],
     "allowJs": true,
     "checkJs": false,
 
@@ -18,6 +18,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["**/*.ts", "**/*.js"],
+  "include": ["**/*.ts", "**/*.js", "types/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

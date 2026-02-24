@@ -26,7 +26,12 @@ export const protect = async (
     if (!user) {
       return res.status(401).json({ message: "not authorized" });
     }
-    req.user = user;
+    req.user = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
     return next();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

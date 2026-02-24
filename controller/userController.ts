@@ -1,12 +1,18 @@
-const User = require("../models/userModels");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+import type { Request, Response } from "express";
+import User from "../models/userModels";
+import { RegisterBody, type UserQuery } from "../validation/userSchema";
+import bcrypt from "bcryptjs";
 console.log(process.cwd());
 
-const getUsers = async (req, res) => {
+const getUsers = async (req: Request, res: Response) => {
   try {
-    const { search, role, page = 1, limit = 5 } = req.query;
-    const filter = {};
+    const {
+      search,
+      role,
+      page = 1,
+      limit = 5,
+    } = req.query as unknown as UserQuery;
+    const filter: Record<string, any> = {}; //this type shuts the filter.$or and filter.role issue
     //in filter we add conditions what type of user we want
     if (search) {
       filter.$or = [
@@ -18,10 +24,9 @@ const getUsers = async (req, res) => {
     if (role) {
       filter.role = role;
     } // 1. skip = (1-1)*5 so on first page will be 5 , than 2. skip = (2-1)*5 it will leave first five and will write on next page 6-10...
-    const pageNum = Number(page) || 1;
-    const limitNum = Number(limit) || 100;
-    const skip = (pageNum - 1) * limitNum; // pagination means slice like pages
+    const skip = (page - 1) * limit; // pagination means slice like pages
     const [items, total] = await Promise.all([
+      // all together waits of finish both
       User.find(filter).skip(skip).limit(limit).select("-password"), // if - was not written than it will show only id and password but if added eveything will be shwon besides it
       User.countDocuments(filter),
     ]);
@@ -33,14 +38,15 @@ const getUsers = async (req, res) => {
       total,
       pages,
     });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({ message: message });
   }
 };
 
-const registerUsers = async (req, res) => {
+const registerUsers = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password } = req.body as RegisterBody;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -59,11 +65,12 @@ const registerUsers = async (req, res) => {
       email: user.email,
       token: generateToken(user._id),
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ message });
   }
 };
-const loginUsers = async (req, res) => {
+const loginUsers = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email }).select("+password");
@@ -90,7 +97,7 @@ const loginUsers = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
-const updateUser = async (req, res) => {
+const updateUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -104,7 +111,7 @@ const updateUser = async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 };
-const deleteUser = async (req, res) => {
+const deleteUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findbyIdAndDelete(req.params.id);
     if (!user) {
@@ -121,7 +128,7 @@ const generateToken = (id) => {
     expiresIn: "30d",
   });
 };
-const getUserById = async (req, res) => {
+const getUserById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const user = await User.findById(id).select("-password");

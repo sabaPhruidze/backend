@@ -22,7 +22,7 @@ export const protect = async (
       return res.status(500).json({ message: "JWT_SECRET is missing" });
     }
     const decoded = jwt.verify(token, secret) as JWTPayLoad;
-    const user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id).select("-password").lean(); // here added the lean
     if (!user) {
       return res.status(401).json({ message: "not authorized" });
     }

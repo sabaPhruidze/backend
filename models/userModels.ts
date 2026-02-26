@@ -1,4 +1,5 @@
 import mongoose, { Schema, model, type InferSchemaType } from "mongoose";
+
 const userSchema = new Schema(
   {
     name: {
@@ -28,6 +29,12 @@ const userSchema = new Schema(
     timestamps: true,
   },
 );
+/* indexes 1) role + createdAt => fast filter and sort (on enterprise use-case)
+ * createdAt => fast sorting
+ */
+userSchema.index({ role: 1, createdAt: -1 });
+userSchema.index({ createdAt: -1 });
+
 export type UserDoc = InferSchemaType<typeof userSchema>; // like in zod here inferSchemaType creates type from userchema
 const User = mongoose.models.User || model<UserDoc>("User", userSchema); //for solving this error OverwriteModelError: Cannot overwrite 'User' model once compiled.
 export default User;

@@ -6,37 +6,45 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 console.log(process.cwd());
 
+// .select() , .lean() , sort(), limit/skip ; total count
 const getUsers = async (req: Request, res: Response) => {
   try {
-    const {
-      search,
-      role,
-      page = 1,
-      limit = 5,
-    } = req.query as unknown as UserQuery;
-    const filter: Record<string, any> = {}; //this type shuts the filter.$or and filter.role issue
-    //in filter we add conditions what type of user we want
-    if (search) {
+    const { search, role } = req.query as Record<string, string>;
+    // from query page and limit comes as string so I will convert them to number
+    const pageNum = Math.max(
+      parseInt((req.query.page as string) ?? "1", 10) || 1,
+      1,
+    );
+    const limitNum = Math.min(
+      Math.max(parseInt((req.query.limit as string) ?? "5", 10) || 5, 1),
+      100,
+    );
+    const filter: Record<string, any> = {};
+    //Search name or email
+    if (search?.trim()) {
+      const term = search.trim();
       filter.$or = [
-        // $or means search document where first or second option is true
-        { name: { $regex: search, $options: "i" } }, //$regex means search according to search
-        { email: { $regex: search, $options: "i" } }, //$options means in "i" case not to make case insensitive AaBb
+        { name: { $regex: term, $options: "i" } },
+        { email: { $regex: term, $options: "i" } },
       ];
     }
     if (role) {
       filter.role = role;
-    } // 1. skip = (1-1)*5 so on first page will be 5 , than 2. skip = (2-1)*5 it will leave first five and will write on next page 6-10...
-    const skip = (page - 1) * limit; // pagination means slice like pages
+    }
+    const skip = (pageNum - 1) * limitNum;
     const [items, total] = await Promise.all([
-      // all together waits of finish both
-      User.find(filter).skip(skip).limit(limit).select("-password"), // if - was not written than it will show only id and password but if added eveything will be shwon besides it
+      User.find(filter)
+        .sort({ createdAt: -1 }) // last in first shown (using createdat)
+        .skip(skip)
+        .limit(limitNum) // select(-password) removed because it is already written in model
+        .lean(), //fast read
       User.countDocuments(filter),
     ]);
-    const pages = Math.ceil(total / limit);
+    const pages = Math.ceil(total / limitNum);
     return res.status(200).json({
       items,
-      page,
-      limit,
+      page: pageNum,
+      limit: limitNum,
       total,
       pages,
     });

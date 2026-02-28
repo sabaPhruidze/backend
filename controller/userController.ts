@@ -9,12 +9,12 @@ console.log(process.cwd());
 // .select() , .lean() , sort(), limit/skip ; total count
 const getUsers = async (req: Request, res: Response) => {
   try {
-    const { search, role } = req.query as Record<string, string>;
+    const { search, role } = req.query as Record<string, string>; //req.query is an object so it's key will be string as well as value (That wat Record shows)
     // from query page and limit comes as string so I will convert them to number
     const pageNum = Math.max(
       parseInt((req.query.page as string) ?? "1", 10) || 1,
       1,
-    );
+    ); //it will be number or NAN and if NaN it will write ||1 | 10 means counting system, it is like standard | "1" means that if it is number bt -5 or less than 1 math.max writes the number that is above others
     const limitNum = Math.min(
       Math.max(parseInt((req.query.limit as string) ?? "5", 10) || 5, 1),
       100,
@@ -33,12 +33,13 @@ const getUsers = async (req: Request, res: Response) => {
     }
     const skip = (pageNum - 1) * limitNum;
     const [items, total] = await Promise.all([
+      // it will be faster by this way of searching both together
       User.find(filter)
         .sort({ createdAt: -1 }) // last in first shown (using createdat)
         .skip(skip)
         .limit(limitNum) // select(-password) removed because it is already written in model
         .lean(), //fast read
-      User.countDocuments(filter),
+      User.countDocuments(filter), // this is for calculating pages ,how many documents are with the filter
     ]);
     const pages = Math.ceil(total / limitNum);
     return res.status(200).json({

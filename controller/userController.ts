@@ -59,7 +59,7 @@ const registerUsers = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body as RegisterBody;
 
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email }).lean(); // I only need to know if this email exist in database or not so I will use lean and it makes faster
     if (userExists) {
       return res
         .status(400)
@@ -77,6 +77,16 @@ const registerUsers = async (req: Request, res: Response) => {
       token: generateToken(user._id),
     });
   } catch (error: unknown) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as any).code === 11000
+    ) {
+      return res
+        .status(400)
+        .json({ message: "User with this email already exists" });
+    }
     const message = error instanceof Error ? error.message : String(error);
     res.status(500).json({ message });
   }

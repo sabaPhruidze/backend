@@ -3,6 +3,7 @@ import { z } from "zod";
 
 type Target = "body" | "query" | "params";
 
+type ValidateBag = Partial<Record<Target, unknown>>;
 export const validate =
   (schema: z.ZodSchema, target: Target = "body", label?: string) =>
   (req: Request, res: Response, next: NextFunction) => {
@@ -19,6 +20,8 @@ export const validate =
       });
     }
     //{ success: true, data }
-    (req as any)[target] = result.data; //Text will be trimmed , no additional fields and no additional check in controller anymore
+    const bag = (req as any).validated ?? ({} as ValidateBag);
+    bag[target] = result.data; //Text will be trimmed , no additional fields and no additional check in controller anymore
+    (req as any).validated = bag;
     next();
   };

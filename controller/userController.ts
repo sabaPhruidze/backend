@@ -124,6 +124,7 @@ const updateUser = async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
     const user = await User.findByIdAndUpdate(id, req.body, {
       new: true,
+      runValidators: true,
     });
     if (!user) {
       return res.status(404).json({ message: "user does not exist" });
@@ -150,7 +151,7 @@ const deleteUser = async (req: Request, res: Response) => {
   }
 };
 const generateToken = (id: string) => {
-  const secret = process.env.JTW_SECRET;
+  const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error("JWT_SECRET is missing");
   }

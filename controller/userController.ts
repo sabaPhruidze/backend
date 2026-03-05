@@ -171,6 +171,22 @@ const getUserById = async (req: Request, res: Response) => {
     return res.status(500).json({ message });
   }
 };
+const explainUsersQuery = async (req: Request, res: Response) => {
+  try {
+    // Added this in order to see if the mongodb really use indexes or not
+    const role = req.query.role as string | undefined;
+    const filter: Record<string, any> = {};
+    if (role) filter.role = role;
+    const plan = await User.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .explain("executionStats");
+    return res.status(200).json(plan);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({ message });
+  }
+};
 
 export default {
   getUsers,
@@ -179,4 +195,5 @@ export default {
   updateUser,
   deleteUser,
   getUserById,
+  explainUsersQuery,
 };

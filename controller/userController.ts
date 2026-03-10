@@ -1,6 +1,6 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import User from "../models/userModels";
-import { RegisterBody, type UserQuery } from "../validation/userSchema";
+import { RegisterBody } from "../validation/userSchema";
 import { LoginBody } from "../validation/userSchema";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -92,20 +92,33 @@ const registerUsers = async (req: Request, res: Response) => {
     res.status(500).json({ message });
   }
 };
-const loginUsers = async (req: Request, res: Response) => {
+const loginUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const { email, password } = req.body as LoginBody;
+    if (!email || !password) {
+      res
+        .status(400)
+        .json({ status: "fail", message: "Email and password is necessary" });
+      return;
+    }
     const user = await User.findOne({ email }).select("+password"); // password will come but typescript might still think undefined so I will write down that case
     if (!user || !user.password) {
-      return res
-        .status(400)
-        .json({ message: "Email or Password is not correct" });
+      res.status(401).json({
+        status: "fail",
+        message: "Wrong authentification data",
+      });
+      return;
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res
-        .status(400)
-        .json({ message: "Email or Password is not correct" });
+      res
+        .status(401)
+        .json({ status: "fail", message: "Email or Password is not correct" });
+      return;
     }
 
     return res.status(200).json({

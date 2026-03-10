@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
 import User from "../models/userModels";
 import { RegisterBody } from "../validation/userSchema";
 import { LoginBody } from "../validation/userSchema";
@@ -99,11 +99,7 @@ const registerUsers = async (req: Request, res: Response) => {
     res.status(500).json({ message });
   }
 };
-const loginUsers = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const loginUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body as LoginBody;
     if (!email || !password) {
@@ -113,18 +109,17 @@ const loginUsers = async (
       return;
     }
     const user = await User.findOne({ email }).select("+password"); // password will come but typescript might still think undefined so I will write down that case
+    const invalidCreds = {
+      status: "fail",
+      message: "Wrong authentification data",
+    };
     if (!user || !user.password) {
-      res.status(401).json({
-        status: "fail",
-        message: "Wrong authentification data",
-      });
+      res.status(401).json(invalidCreds);
       return;
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res
-        .status(401)
-        .json({ status: "fail", message: "Email or Password is not correct" });
+      res.status(401).json(invalidCreds);
       return;
     }
 
@@ -143,8 +138,11 @@ const loginUsers = async (
       accessToken,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    return res.status(500).json({ message: message });
+    console.error("loginUsers error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+    });
   }
 };
 const updateUser = async (req: Request, res: Response) => {

@@ -4,7 +4,14 @@ import { RegisterBody } from "../validation/userSchema";
 import { LoginBody } from "../validation/userSchema";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { generateAccessToken, generateRefreshToken } from "../utils/token-util";
 console.log(process.cwd());
+type GetUsersQuery = {
+  search?: string;
+  role?: string;
+  page?: string;
+  limit?: string;
+};
 
 // .select() , .lean() , sort(), limit/skip ; total count
 const getUsers = async (req: Request, res: Response) => {
@@ -121,11 +128,19 @@ const loginUsers = async (
       return;
     }
 
-    return res.status(200).json({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      token: generateToken(user._id),
+    const accessToken = generateAccessToken(user._id.toString());
+    const refreshToken = generateRefreshToken(user._id.toString());
+    user.refreshToken = refreshToken; // this is a plain variant I will hash later
+    await user.save();
+    res.cookie("jwt", refreshToken, {
+      httpOnly: true, // cookie can not be read by JS (For XSS)
+      secure: process.env.NODE_ENV === "production", //only send on https
+      sameSite: "strict", //CSRF issue solution
+      maxAge: 7 * 24 * 60 * 60 * 1000, //will live 7 days
+    });
+    res.status(200).json({
+      status: "success",
+      accessToken,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

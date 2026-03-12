@@ -3,7 +3,6 @@ import User from "../models/userModels";
 import { RegisterBody } from "../validation/userSchema";
 import { LoginBody } from "../validation/userSchema";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { generateAccessToken, generateRefreshToken } from "../utils/token-util";
 console.log(process.cwd());
 type GetUsersQuery = {
@@ -78,11 +77,15 @@ const registerUsers = async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashedPassword });
 
-    res.status(201).json({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      token: generateToken(user._id),
+    return res.status(201).json({
+      status: "success",
+      message: "User registered succesfully",
+      user: {
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error: unknown) {
     if (
@@ -173,15 +176,7 @@ const deleteUser = async (req: Request, res: Response) => {
     return res.status(400).json({ message });
   }
 };
-const generateToken = (id: string) => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error("JWT_SECRET is missing");
-  }
-  return jwt.sign({ id }, secret, {
-    expiresIn: "30d",
-  });
-};
+
 const getUserById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params as { id: string };

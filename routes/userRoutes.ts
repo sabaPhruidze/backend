@@ -17,6 +17,8 @@ router.get(
   validate(userQuerySchema, "query", "Query Validation Errors"),
   userController.getUsers,
 );
+
+router.get("/debug/explain", userController.explainUsersQuery);
 router.get(
   "/:id",
   validate(userIdParamSchema, "params", "Params Validation Errors"),
@@ -35,5 +37,5 @@ router.post(
 );
 router.put("/:id", protect, userController.updateUser);
 router.delete("/:id", protect, userController.deleteUser);
-router.get("/debug/explain", userController.explainUsersQuery);
+
 export default router;

@@ -14,7 +14,7 @@ type GetUsersQuery = {
 };
 
 // .select() , .lean() , sort(), limit/skip ; total count
-const getUsers = async (req: Request, res: Response): Promise<void> => {
+const getUsers = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { search, role, page, limit } = req.query as GetUsersQuery;
     // from query page and limit comes as string so I will convert them to number
@@ -49,18 +49,16 @@ const getUsers = async (req: Request, res: Response): Promise<void> => {
       User.countDocuments(filter), // this is for calculating pages ,how many documents are with the filter
     ]);
     const pages = Math.ceil(total / limitNum);
-    res.status(200).json({
+    return res.status(200).json({
       items,
       page: pageNum,
       limit: limitNum,
       total,
       pages,
     });
-    return;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    res.status(500).json({ message: message });
-    return;
+    return res.status(500).json({ message: message });
   }
 };
 
@@ -101,14 +99,13 @@ const registerUsers = async (req: Request, res: Response) => {
     res.status(500).json({ message });
   }
 };
-const loginUsers = async (req: Request, res: Response): Promise<void> => {
+const loginUsers = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { email, password } = req.body as LoginBody;
     if (!email || !password) {
-      res
+      return res
         .status(400)
         .json({ status: "fail", message: "Email and password is necessary" });
-      return;
     }
     const user = await User.findOne({ email }).select("+password"); // password will come but typescript might still think undefined so I will write down that case
     const invalidCreds = {
@@ -116,23 +113,21 @@ const loginUsers = async (req: Request, res: Response): Promise<void> => {
       message: "Wrong authentification data",
     };
     if (!user || !user.password) {
-      res.status(401).json(invalidCreds);
-      return;
+      return res.status(401).json(invalidCreds);
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(401).json(invalidCreds);
-      return;
+      return res.status(401).json(invalidCreds);
     }
+    const userId = user._id.toString(); // mongoose id
+    const accessToken = generateAccessToken(userId);
+    const refreshToken = generateRefreshToken(userId);
 
-    const accessToken = generateAccessToken(user._id.toString());
-    const refreshToken = generateRefreshToken(user._id.toString());
-    user.refreshToken = refreshToken; // this is a plain variant I will hash later
-    await user.save();
-    res.cookie("jwt", refreshToken, {
+    res.cookie("refresh", refreshToken, {
       httpOnly: true, // cookie can not be read by JS (For XSS)
       secure: process.env.NODE_ENV === "production", //only send on https
-      sameSite: "strict", //CSRF issue solution
+      sameSite: process.env.COOKIE_SAMESITE as "lax" | "strict" | "none", //CSRF issue solution
+      path: "/api/users/login",
       maxAge: 7 * 24 * 60 * 60 * 1000, //will live 7 days
     });
     res.status(200).json({

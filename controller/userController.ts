@@ -14,9 +14,9 @@ type GetUsersQuery = {
 };
 
 // .select() , .lean() , sort(), limit/skip ; total count
-const getUsers = async (req: Request, res: Response) => {
+const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { search, role } = req.query as Record<string, string>; //req.query is an object so it's key will be string as well as value (That wat Record shows)
+    const { search, role, page, limit } = req.query as GetUsersQuery;
     // from query page and limit comes as string so I will convert them to number
     const pageNum = Math.max(
       parseInt((req.query.page as string) ?? "1", 10) || 1,
@@ -49,16 +49,18 @@ const getUsers = async (req: Request, res: Response) => {
       User.countDocuments(filter), // this is for calculating pages ,how many documents are with the filter
     ]);
     const pages = Math.ceil(total / limitNum);
-    return res.status(200).json({
+    res.status(200).json({
       items,
       page: pageNum,
       limit: limitNum,
       total,
       pages,
     });
+    return;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    return res.status(500).json({ message: message });
+    res.status(500).json({ message: message });
+    return;
   }
 };
 

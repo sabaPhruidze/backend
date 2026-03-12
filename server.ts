@@ -29,8 +29,8 @@ const port = process.env.PORT;
 app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/fs", fsRoutes);
-assert(process.env.JWT_SECRET, "JWT_SECRET IS IMPORTANT");
-
+assert(process.env.JWT_ACCESS_SECRET, "JWT_ACCESS_SECRET IS IMPORTANT");
+assert(process.env.JWT_REFRESH_SECRET, "JWT_REFRESH_SECRET IS IMPORTANT");
 // if reverse proxy/https ,cookie secure work correctly
 app.set("trust proxy", 1);
 // api default for security standard's

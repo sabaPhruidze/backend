@@ -4,6 +4,7 @@ import User from "../models/userModels";
 
 type JWTPayLoad = {
   id: string;
+  type?: "access" | "refresh";
 };
 export const protect = async (
   req: Request,
@@ -17,11 +18,16 @@ export const protect = async (
 
   try {
     const token = auth.split(" ")[1];
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      return res.status(500).json({ message: "JWT_SECRET is missing" });
+    const accessSecret = process.env.JWT_ACCESS_SECRET;
+    if (!accessSecret) {
+      return res.status(500).json({ message: "JWT_ACCESS_SECRET is missing" });
     }
-    const decoded = jwt.verify(token, secret) as JWTPayLoad;
+
+    const decoded = jwt.verify(token, accessSecret) as JWTPayLoad;
+    if (decoded.type !== "access") {
+      //e.x it is refresh
+      return res.status(401).json({ message: "Invalid token type" });
+    }
     const user = await User.findById(decoded.id).select("-password").lean(); // here added the lean
     if (!user) {
       return res.status(401).json({ message: "not authorized" });

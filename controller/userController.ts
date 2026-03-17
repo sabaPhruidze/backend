@@ -214,7 +214,64 @@ type RefreshTokenPayload = {
   id: string;
   type?: "access" | "refresh";
 };
-const refreshAccessToken = {};
+const refreshAccessToken = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const refreshToken = req.cookies?.refresh;
+    if (!refreshToken) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Refresh token not found",
+      });
+    }
+    const refreshSecret = process.env.JWT_REFRESH_SECRET;
+
+    if (!refreshSecret) {
+      return res.status(500).json({
+        status: "error",
+        message: "JWT_REFRESH_SECRET is missing",
+      });
+    }
+    //checking refresh token with it's secret signature
+    const decoded = jwt.verify(
+      refreshToken,
+      refreshSecret,
+    ) as RefreshTokenPayload;
+
+    if (decoded.type !== "refresh") {
+      return res.status(401).json({
+        status: "fail",
+        message: "Invalid token type",
+      });
+    }
+    // chekc if user still exists
+    const user = await User.findById(decoded.id).select("-password").lean();
+
+    if (!user) {
+      return res.status(401).json({
+        status: "fail",
+        message: "User not found",
+      });
+    }
+    // new access token generate
+    const newAccessToken = generateAccessToken(user._id.toString());
+    // refresh endpoint only return's access token currently
+    return res.status(200).json({
+      status: "success",
+      accessToken: newAccessToken,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.log("refreshAccessToken error: ", message);
+
+    return res.status(401).json({
+      status: "fail",
+      message: "Invalid or expired refresh token",
+    });
+  }
+};
 
 export default {
   getUsers,

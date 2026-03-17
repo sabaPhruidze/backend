@@ -219,6 +219,7 @@ const refreshAccessToken = async (
   res: Response,
 ): Promise<Response> => {
   try {
+    console.log("req.cookies =>", req.cookies); // დროებითი შემოწმება
     const refreshToken = req.cookies?.refresh;
     if (!refreshToken) {
       return res.status(401).json({

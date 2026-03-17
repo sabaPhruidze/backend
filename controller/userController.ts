@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import jwt from "jsonwebtoken";
 import User from "../models/userModels";
 import { RegisterBody } from "../validation/userSchema";
 import { LoginBody } from "../validation/userSchema";
@@ -128,6 +129,7 @@ const loginUsers = async (req: Request, res: Response): Promise<Response> => {
     const cookieSameSite =
       (process.env.COOKIE_SAMESITE as "lax" | "strict" | "none" | undefined) ??
       "lax";
+    //browser refresh cookie-ს მხოლოდ ამ route-ზე გაგზავნის.
     res.cookie("refresh", refreshToken, {
       httpOnly: true, // cookie can not be read by JS (For XSS)
       secure: process.env.NODE_ENV === "production", //only send on https
@@ -208,6 +210,11 @@ const explainUsersQuery = async (req: Request, res: Response) => {
     return res.status(500).json({ message });
   }
 };
+type RefreshTokenPayload = {
+  id: string;
+  type?: "access" | "refresh";
+};
+const refreshAccessToken = {};
 
 export default {
   getUsers,
@@ -217,4 +224,5 @@ export default {
   deleteUser,
   getUserById,
   explainUsersQuery,
+  refreshAccessToken,
 };

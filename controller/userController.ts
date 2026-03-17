@@ -125,12 +125,14 @@ const loginUsers = async (req: Request, res: Response): Promise<Response> => {
     const userId = user._id.toString(); // mongoose id
     const accessToken = generateAccessToken(userId);
     const refreshToken = generateRefreshToken(userId);
-
+    const cookieSameSite =
+      (process.env.COOKIE_SAMESITE as "lax" | "strict" | "none" | undefined) ??
+      "lax";
     res.cookie("refresh", refreshToken, {
       httpOnly: true, // cookie can not be read by JS (For XSS)
       secure: process.env.NODE_ENV === "production", //only send on https
-      sameSite: process.env.COOKIE_SAMESITE as "lax" | "strict" | "none", //CSRF issue solution
-      path: "/api/users/login",
+      sameSite: cookieSameSite, //CSRF issue solution
+      path: "/api/users/refresh",
       maxAge: 7 * 24 * 60 * 60 * 1000, //will live 7 days
     });
     res.status(200).json({

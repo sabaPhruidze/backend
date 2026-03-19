@@ -134,7 +134,7 @@ const loginUsers = async (req: Request, res: Response): Promise<Response> => {
     //browser refresh cookie-ს მხოლოდ ამ route-ზე გაგზავნის.
     res.cookie("refresh", refreshToken, {
       httpOnly: true, // cookie can not be read by JS (For XSS)
-      secure: process.env.NODE_ENV === "production", //only send on https
+      secure: process.env.NODE_ENV === "production", //only send on https when run on web, now I still have in development so I will use http
       sameSite: cookieSameSite, //CSRF issue solution
       path: "/api/users/refresh",
       maxAge: 7 * 24 * 60 * 60 * 1000, //will live 7 days

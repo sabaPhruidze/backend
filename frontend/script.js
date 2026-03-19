@@ -1,5 +1,15 @@
-const button = document.querySelector("#loginBtn");
+const registerName = document.querySelector("#registerName");
+const registerEmail = document.querySelector("#registerEmail");
+const registerPassword = document.querySelector("#registerPassword");
+const registerBtn = document.querySelector("#registerBtn");
 
-button.addEventListener("click", () => {
-  console.log("click");
-});
+const loginEmail = document.querySelector("#loginEmail");
+const loginPassword = document.querySelector("#loginPassword");
+const loginBtn = document.querySelector("#loginBtn");
+
+const responseBox = document.querySelector("#responseBox");
+
+registerBtn.addEventListener(
+  "click",
+  () => (responseBox.textContent = "Register button clicked"),
+);

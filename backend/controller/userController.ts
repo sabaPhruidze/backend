@@ -4,7 +4,11 @@ import User from "../models/userModels";
 import { RegisterBody } from "../validation/userSchema";
 import { LoginBody } from "../validation/userSchema";
 import bcrypt from "bcryptjs";
-import { generateAccessToken, generateRefreshToken } from "../utils/token-util";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  hashToken,
+} from "../utils/token-util";
 console.log(process.cwd());
 type GetUsersQuery = {
   search?: string;
@@ -126,11 +130,16 @@ const loginUsers = async (req: Request, res: Response): Promise<Response> => {
     const userId = user._id.toString(); // mongoose id
     const accessToken = generateAccessToken(userId);
     const refreshToken = generateRefreshToken(userId);
+    // real refresh token now will be hashed for db
+    const hashedRefreshToken = hashToken(refreshToken);
+    // in user document we only save hashed
+    user.refreshTokenHash = hashedRefreshToken;
+    //  in order to for real written in db this save is necessary
+    await user.save();
     const cookieSameSite =
       (process.env.COOKIE_SAMESITE as "lax" | "strict" | "none" | undefined) ??
       "lax";
-    console.log("refreshToken generated =>", refreshToken);
-    console.log("refresh cookie should be set");
+
     //browser refresh cookie-ს მხოლოდ ამ route-ზე გაგზავნის.
     res.cookie("refresh", refreshToken, {
       httpOnly: true, // cookie can not be read by JS (For XSS)

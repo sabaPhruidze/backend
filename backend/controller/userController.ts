@@ -230,7 +230,6 @@ const refreshAccessToken = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    console.log("req.cookies =>", req.cookies); // დროებითი შემოწმება
     const refreshToken = req.cookies?.refresh;
     if (!refreshToken) {
       return res.status(401).json({
@@ -258,8 +257,10 @@ const refreshAccessToken = async (
         message: "Invalid token type",
       });
     }
-    // chekc if user still exists
-    const user = await User.findById(decoded.id).select("-password").lean();
+    // brought user's relevant refreshTokenHash
+    const user = await User.findById(decoded.id).select(
+      "+refreshTokenHash -password",
+    ); // in standard we have not selected refreshTokenHash so I wrote + as for password , it might forget that it does not have to bring so I added in case
 
     if (!user) {
       return res.status(401).json({
@@ -267,8 +268,24 @@ const refreshAccessToken = async (
         message: "User not found",
       });
     }
-    // new access token generate
+    if (!user.refreshTokenHash) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Refresh token is not active",
+      });
+    }
+    // real refresh token is hashed here (from cookie)
+    const incomingRefreshTokenHash = hashToken(refreshToken);
+    // here we will check refreshTokenHash with refreshToken
+    if (incomingRefreshTokenHash !== user.refreshTokenHash) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Invalid refresh token",
+      });
+    }
+    // this time done no rotation yes so I will add access token return
     const newAccessToken = generateAccessToken(user._id.toString());
+
     // refresh endpoint only return's access token currently
     return res.status(200).json({
       status: "success",

@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 //short time token 15minutes
 export const generateAccessToken = (userId: string) => {
@@ -19,4 +20,8 @@ export const generateRefreshToken = (userId: string) => {
       expiresIn: "7d",
     },
   );
+};
+// This function makes real token hashed in order not to savve plain token there
+export const hashToken = (token: string) => {
+  return crypto.createHash("sha256").update(token).digest("hex");
 };

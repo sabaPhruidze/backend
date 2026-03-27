@@ -302,6 +302,45 @@ const refreshAccessToken = async (
   }
 };
 
+// logout endpoint
+const logout = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const cookieSameSite =
+      (process.env.COOKIE_SAMESITE as "lax" | "strict" | "none" | undefined) ??
+      "lax";
+    // from procect middleware we know which user logs out
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Not authorized",
+      });
+    }
+    // by this on logout saved db refresh token hash will become null
+    await User.findByIdAndUpdate(userId, {
+      $set: { refreshTokenHash: null },
+    });
+    // refresh cookie will be deleted from brower
+    res.clearCookie("refresh", {
+      httpOnly: true, //same cookie type
+      secure: process.env.NODE_ENV === "production",
+      sameSite: cookieSameSite,
+      path: "/api/users/refresh",
+    });
+    return res.status(200).json({
+      status: "success",
+      message: "Logged out succesfully",
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({
+      status: "error",
+      message,
+    });
+  }
+};
+
 export default {
   getUsers,
   registerUsers,
@@ -311,4 +350,5 @@ export default {
   getUserById,
   explainUsersQuery,
   refreshAccessToken,
+  logout,
 };

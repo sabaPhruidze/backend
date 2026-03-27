@@ -25,7 +25,7 @@ const userSchema = new Schema(
       default: "user",
     },
     // Here will will save refreshSessions safely. plaintext here will not come
-    refreshSessions: {
+    refreshTokenHash: {
       // original refresh token will be save independently
       type: String,
       default: [],

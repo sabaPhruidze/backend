@@ -35,6 +35,7 @@ router.post(
   validate(registerSchema, "body", "Validation Errors"),
   userController.registerUsers,
 );
+router.post("/logout", protect, userController.logout);
 router.post("/refresh", userController.refreshAccessToken);
 router.put("/:id", protect, userController.updateUser);
 router.delete("/:id", protect, userController.deleteUser);

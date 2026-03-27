@@ -245,6 +245,9 @@ const refreshAccessToken = async (
         message: "JWT_REFRESH_SECRET is missing",
       });
     }
+    const cookieSameSite =
+      (process.env.COOKIE_SAMESITE as "lax" | "strict" | "none" | undefined) ??
+      "lax";
     //checking refresh token with it's secret signature
     const decoded = jwt.verify(
       refreshToken,
@@ -274,18 +277,40 @@ const refreshAccessToken = async (
         message: "Refresh token is not active",
       });
     }
+
     // real refresh token is hashed here (from cookie)
     const incomingRefreshTokenHash = hashToken(refreshToken);
     // here we will check refreshTokenHash with refreshToken
+    // if hash does not mach this token must not be considered safe
     if (incomingRefreshTokenHash !== user.refreshTokenHash) {
+      user.refreshTokenHash = null; //refresh session canceled
+      await user.save();
+      res.clearCookie("refresh", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: cookieSameSite,
+        path: "/api/users/refresh",
+      });
       return res.status(401).json({
         status: "fail",
-        message: "Invalid refresh token",
+        message: "Refresh token reuse detected. Please log in again",
       });
     }
     // this time done no rotation yes so I will add access token return
     const newAccessToken = generateAccessToken(user._id.toString());
+    // this time will ad refresh token as well
+    const newRefreshToken = generateRefreshToken(user._id.toString());
+    const newHashedRefreshToken = hashToken(newRefreshToken); // new refresh token hash
+    user.refreshTokenHash = newHashedRefreshToken; // on db old hash changed by new
+    await user.save(); // new hash is saved in real in db
 
+    res.cookie("refresh", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: cookieSameSite,
+      path: "/api/users/refresh",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
     // refresh endpoint only return's access token currently
     return res.status(200).json({
       status: "success",

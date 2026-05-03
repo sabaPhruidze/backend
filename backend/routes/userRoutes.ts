@@ -20,7 +20,12 @@ router.get(
   userController.getUsers,
 );
 
-router.get("/debug/explain", userController.explainUsersQuery);
+router.get(
+  "/debug/explain",
+  protect,
+  restrictTo("admin"),
+  userController.explainUsersQuery,
+);
 router.get(
   "/:id",
   validate(userIdParamSchema, "params", "Params Validation Errors"),

@@ -72,8 +72,10 @@ const getUsers = async (req: Request, res: Response): Promise<Response> => {
 
 const registerUsers = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body as RegisterBody;
-
+    const registerData = req.validated?.body as RegisterBody | undefined;
+    if (!registerData)
+      return res.status(400).json({ message: "Register data is missing" });
+    const { name, email, password } = registerData;
     const userExists = await User.findOne({ email }).lean(); // I only need to know if this email exist in database or not so I will use lean and it makes faster
     if (userExists) {
       // this is fast and easy check since it is in database we in advance stop
@@ -113,12 +115,13 @@ const registerUsers = async (req: Request, res: Response) => {
 };
 const loginUsers = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { email, password } = req.body as LoginBody;
-    if (!email || !password) {
+    const loginData = req.validated?.body as LoginBody | undefined;
+    if (!loginData)
       return res
         .status(400)
-        .json({ status: "fail", message: "Email and password is necessary" });
-    }
+        .json({ status: "fail", message: "login data is missing" });
+    const { email, password } = req.body as LoginBody;
+
     const user = await User.findOne({ email }).select("+password"); // password will come but typescript might still think undefined so I will write down that case
     const invalidCreds = {
       status: "fail",
@@ -132,14 +135,18 @@ const loginUsers = async (req: Request, res: Response): Promise<Response> => {
       return res.status(401).json(invalidCreds);
     }
     const userId = user._id.toString(); // mongoose id
+
     const accessToken = generateAccessToken(userId);
     const refreshToken = generateRefreshToken(userId);
+
     // real refresh token now will be hashed for db
     const hashedRefreshToken = hashToken(refreshToken);
     // in user document we only save hashed
+
     user.refreshTokenHash = hashedRefreshToken;
     //  in order to for real written in db this save is necessary
     await user.save();
+
     const cookieSameSite =
       (process.env.COOKIE_SAMESITE as "lax" | "strict" | "none" | undefined) ??
       "lax";

@@ -1,8 +1,13 @@
 import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/userModels";
-import { RegisterBody } from "../validation/userSchema";
-import { LoginBody } from "../validation/userSchema";
+import {
+  RegisterBody,
+  LoginBody,
+  updateUserBody,
+  UpdateUserBody,
+} from "../validation/userSchema";
+import {} from "../validation/userSchema";
 import bcrypt from "bcryptjs";
 import {
   generateAccessToken,
@@ -163,15 +168,16 @@ const loginUsers = async (req: Request, res: Response): Promise<Response> => {
 const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params as { id: string };
-    const user = await User.findByIdAndUpdate(id, req.body, {
+
+    // instead of req.body we will use already checked and validated body
+    const updateData = (req as any).validated.body as UpdateUserBody;
+    // now only name and email will be sent in database
+    const user = await User.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
-    });
-    if (!user) {
-      return res.status(404).json({ message: "user does not exist" });
-    } else {
-      return res.status(200).json(user);
-    }
+    }).select("-password -refreshTokenHash"); //response sensitive fields closed
+    if (!user) return res.status(404).json({ message: "User does not exist" });
+    return res.status(200).json(user);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     return res.status(400).json({ message });

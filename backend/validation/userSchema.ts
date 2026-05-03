@@ -45,7 +45,7 @@ export const userQuerySchema = z
   })
   .strict(); // if there be a parameter that is not within schema it will not allow
 
-export const updateUserSchema = z
+export const updateUserBody = z
   .object({
     name: z
       .string()
@@ -67,4 +67,4 @@ export type RegisterBody = z.infer<typeof registerSchema>;
 export type LoginBody = z.infer<typeof loginSchema>;
 export type USerIdParams = z.infer<typeof userIdParamSchema>;
 export type UserQuery = z.infer<typeof userQuerySchema>;
-export type UpdateUserBody = z.infer<typeof updateUserSchema>;
+export type UpdateUserBody = z.infer<typeof updateUserBody>;

@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { restrictTo, allowSelfOrAdmin } from "../middleware/roleMiddleware";
+
 import userController from "../controller/userController";
+
 import {
   loginSchema,
   registerSchema,
@@ -9,9 +10,31 @@ import {
 } from "../validation/userSchema";
 
 import { protect } from "../middleware/authMiddleware";
+import { restrictTo, allowSelfOrAdmin } from "../middleware/roleMiddleware";
 import { validate } from "../middleware/validate";
 
 const router = Router();
+// PUBLIC AUTH ROUTES
+
+router.post(
+  "/login",
+  validate(loginSchema, "body", "Validation Errors"),
+  userController.loginUsers,
+);
+router.post(
+  "/register",
+  validate(registerSchema, "body", "Validation Errors"),
+  userController.registerUsers,
+);
+// refresh stays public without access token ,because refresh works with cookies
+router.post("/refresh", userController.refreshAccessToken);
+
+// PROTECTED AUTH ROUTES
+
+// req.user is needed to make refreshTokenHash null
+router.post("/logout", protect, userController.logout);
+
+// ADMIN ONLY ROUTES
 
 router.get(
   "/",
@@ -27,6 +50,8 @@ router.get(
   restrictTo("admin"),
   userController.explainUsersQuery,
 );
+
+// SELF OR ADMIN ROUTES
 router.get(
   "/:id",
   protect, //access token check
@@ -34,18 +59,7 @@ router.get(
   allowSelfOrAdmin, // only check's its acccount
   userController.getUserById,
 );
-router.post(
-  "/login",
-  validate(loginSchema, "body", "Validation Errors"),
-  userController.loginUsers,
-);
-router.post(
-  "/register",
-  validate(registerSchema, "body", "Validation Errors"),
-  userController.registerUsers,
-);
-router.post("/logout", protect, userController.logout);
-router.post("/refresh", userController.refreshAccessToken);
+
 router.put(
   "/:id",
   protect,

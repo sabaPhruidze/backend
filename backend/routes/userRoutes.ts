@@ -7,6 +7,7 @@ import {
   registerSchema,
   userIdParamSchema,
   userQuerySchema,
+  updateUserSchema,
 } from "../validation/userSchema";
 
 import { protect } from "../middleware/authMiddleware";
@@ -65,6 +66,7 @@ router.put(
   protect,
   validate(userIdParamSchema, "params", "Params Validation Errors"),
   allowSelfOrAdmin,
+  validate(updateUserSchema, "body", "Update Validation Errors"),
   userController.updateUser,
 );
 router.delete(

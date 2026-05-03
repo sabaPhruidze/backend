@@ -4,6 +4,7 @@
     "lib": ["ES2020"],
     "module": "commonjs",
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "allowSyntheticDefaultImports": true,
     "rootDir": ".",
     "outDir": "dist",

@@ -20,8 +20,8 @@ export const validate =
       });
     }
     //{ success: true, data }
-    const bag = (req as any).validated ?? ({} as ValidateBag);
+    const bag = req.validated ?? ({} as ValidateBag);
     bag[target] = result.data; //Text will be trimmed , no additional fields and no additional check in controller anymore
-    (req as any).validated = bag;
+    req.validated = bag;
     next();
   };

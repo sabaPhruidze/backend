@@ -4,7 +4,6 @@ import User from "../models/userModels";
 import {
   RegisterBody,
   LoginBody,
-  updateUserBody,
   UpdateUserBody,
 } from "../validation/userSchema";
 import {} from "../validation/userSchema";
@@ -170,7 +169,9 @@ const updateUser = async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
 
     // instead of req.body we will use already checked and validated body
-    const updateData = (req as any).validated.body as UpdateUserBody;
+    const updateData = req.validated.body as UpdateUserBody | undefined;
+    if (updateData)
+      return res.status(400).json({ message: "Update data is mising" });
     // now only name and email will be sent in database
     const user = await User.findByIdAndUpdate(id, updateData, {
       new: true,

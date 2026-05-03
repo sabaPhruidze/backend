@@ -1,5 +1,6 @@
 import type { Types } from "mongoose";
-
+type ValidatedTarget = "body" | "params" | "query";
+type ValidatedBag = Partial<Record<ValidatedTarget, unknown>>;
 declare global {
   namespace Express {
     interface Request {
@@ -9,6 +10,7 @@ declare global {
         email?: string;
         role?: string;
       };
+      validated?: ValidatedBag;
     }
   }
 }

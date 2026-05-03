@@ -44,7 +44,27 @@ export const userQuerySchema = z
       .optional(), //int() X-2.5 O-2
   })
   .strict(); // if there be a parameter that is not within schema it will not allow
+
+export const updateUserSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, "Name is required")
+      .max(30, "Name must be at most 30 characters")
+      .optional(),
+    email: z
+      .email("Invalid email format")
+      .trim()
+      .max(50, "Email must be at most 50 characters")
+      .optional(),
+  })
+  .strict() // added so it will bloke other additional not allowed fields;
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required",
+  });
 export type RegisterBody = z.infer<typeof registerSchema>;
 export type LoginBody = z.infer<typeof loginSchema>;
 export type USerIdParams = z.infer<typeof userIdParamSchema>;
 export type UserQuery = z.infer<typeof userQuerySchema>;
+export type UpdateUserBody = z.infer<typeof updateUserSchema>;

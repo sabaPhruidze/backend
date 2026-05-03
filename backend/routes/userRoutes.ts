@@ -1,5 +1,5 @@
 import { Router } from "express";
-
+import { restrictTo } from "../middleware/roleMiddleware";
 import userController from "../controller/userController";
 import {
   loginSchema,
@@ -14,6 +14,8 @@ const router = Router();
 
 router.get(
   "/",
+  protect, //added access token check
+  restrictTo("admin"), //only admin is allowed
   validate(userQuerySchema, "query", "Query Validation Errors"),
   userController.getUsers,
 );

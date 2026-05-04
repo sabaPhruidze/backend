@@ -5,6 +5,7 @@ import {
   RegisterBody,
   LoginBody,
   UpdateUserBody,
+  UserQuery,
 } from "../validation/userSchema";
 import {} from "../validation/userSchema";
 import bcrypt from "bcryptjs";
@@ -14,28 +15,19 @@ import {
   hashToken,
 } from "../utils/token-util";
 console.log(process.cwd());
-type GetUsersQuery = {
-  search?: string;
-  role?: string;
-  page?: string;
-  limit?: string;
-};
 
 // .select() , .lean() , sort(), limit/skip ; total count
 const getUsers = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { search, role, page, limit } = req.query as GetUsersQuery;
-    // from query page and limit comes as string so I will convert them to number
-    const pageNum = Math.max(
-      parseInt((req.query.page as string) ?? "1", 10) || 1,
-      1,
-    ); //it will be number or NAN and if NaN it will write ||1 | 10 means counting system, it is like standard | "1" means that if it is number bt -5 or less than 1 math.max writes the number that is above others
-    const limitNum = Math.min(
-      Math.max(parseInt((req.query.limit as string) ?? "5", 10) || 5, 1),
-      100,
-    );
+    const queryData = req.validated?.query as UserQuery | undefined;
+    if (!queryData)
+      return res.status(400).json({ message: "Query data is missing" });
+    const { search, role } = queryData;
+    // useQuerySchema turn's it into number so page will be already number not string
+    const pageNum = queryData.page ?? 1;
+    const limitNum = queryData.limit ?? 5; //same here
     const filter: Record<string, any> = {};
-    //Search name or email
+
     if (search?.trim()) {
       const term = search.trim();
       filter.$or = [
@@ -43,18 +35,18 @@ const getUsers = async (req: Request, res: Response): Promise<Response> => {
         { email: { $regex: term, $options: "i" } },
       ];
     }
+    // role is laready checked user or admin
     if (role) {
       filter.role = role;
     }
     const skip = (pageNum - 1) * limitNum;
     const [items, total] = await Promise.all([
-      // it will be faster by this way of searching both together
       User.find(filter)
-        .sort({ createdAt: -1 }) // last in first shown (using createdat)
+        .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limitNum) // select(-password) removed because it is already written in model
-        .lean(), //fast read
-      User.countDocuments(filter), // this is for calculating pages ,how many documents are with the filter
+        .limit(limitNum)
+        .lean(),
+      User.countDocuments(filter),
     ]);
     const pages = Math.ceil(total / limitNum);
     return res.status(200).json({

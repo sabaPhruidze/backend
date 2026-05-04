@@ -57,6 +57,13 @@ const userSchema = new mongoose_1.Schema({
         enum: ["user", "admin"],
         default: "user",
     },
+    // Here will will save refreshSessions safely. plaintext here will not come
+    refreshTokenHash: {
+        // original refresh token will be save independently
+        type: String,
+        default: null, // refreshTokenHash is string or null
+        select: false, // defaultly it does not have to return as password.
+    },
 }, {
     timestamps: true,
 });

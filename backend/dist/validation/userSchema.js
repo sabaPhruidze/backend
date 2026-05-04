@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userQuerySchema = exports.userIdParamSchema = exports.loginSchema = exports.registerSchema = void 0;
+exports.updateUserBody = exports.userQuerySchema = exports.userIdParamSchema = exports.loginSchema = exports.registerSchema = void 0;
 const zod_1 = require("zod");
 // Receiving only name,email,password and strict() will not allow other fields such as (role , isAdmin...)
 exports.registerSchema = zod_1.z
@@ -46,3 +46,21 @@ exports.userQuerySchema = zod_1.z
         .optional(), //int() X-2.5 O-2
 })
     .strict(); // if there be a parameter that is not within schema it will not allow
+exports.updateUserBody = zod_1.z
+    .object({
+    name: zod_1.z
+        .string()
+        .trim()
+        .min(2, "Name is required")
+        .max(30, "Name must be at most 30 characters")
+        .optional(),
+    email: zod_1.z
+        .email("Invalid email format")
+        .trim()
+        .max(50, "Email must be at most 50 characters")
+        .optional(),
+})
+    .strict() // added so it will bloke other additional not allowed fields;
+    .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required",
+});

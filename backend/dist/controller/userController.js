@@ -11,12 +11,14 @@ console.log(process.cwd());
 // .select() , .lean() , sort(), limit/skip ; total count
 const getUsers = async (req, res) => {
     try {
-        const { search, role, page, limit } = req.query;
-        // from query page and limit comes as string so I will convert them to number
-        const pageNum = Math.max(parseInt(req.query.page ?? "1", 10) || 1, 1); //it will be number or NAN and if NaN it will write ||1 | 10 means counting system, it is like standard | "1" means that if it is number bt -5 or less than 1 math.max writes the number that is above others
-        const limitNum = Math.min(Math.max(parseInt(req.query.limit ?? "5", 10) || 5, 1), 100);
+        const queryData = req.validated?.query;
+        if (!queryData)
+            return res.status(400).json({ message: "Query data is missing" });
+        const { search, role } = queryData;
+        // useQuerySchema turn's it into number so page will be already number not string
+        const pageNum = queryData.page ?? 1;
+        const limitNum = queryData.limit ?? 5; //same here
         const filter = {};
-        //Search name or email
         if (search?.trim()) {
             const term = search.trim();
             filter.$or = [
@@ -24,18 +26,18 @@ const getUsers = async (req, res) => {
                 { email: { $regex: term, $options: "i" } },
             ];
         }
+        // role is laready checked user or admin
         if (role) {
             filter.role = role;
         }
         const skip = (pageNum - 1) * limitNum;
         const [items, total] = await Promise.all([
-            // it will be faster by this way of searching both together
             userModels_1.default.find(filter)
-                .sort({ createdAt: -1 }) // last in first shown (using createdat)
+                .sort({ createdAt: -1 })
                 .skip(skip)
-                .limit(limitNum) // select(-password) removed because it is already written in model
-                .lean(), //fast read
-            userModels_1.default.countDocuments(filter), // this is for calculating pages ,how many documents are with the filter
+                .limit(limitNum)
+                .lean(),
+            userModels_1.default.countDocuments(filter),
         ]);
         const pages = Math.ceil(total / limitNum);
         return res.status(200).json({
@@ -53,7 +55,10 @@ const getUsers = async (req, res) => {
 };
 const registerUsers = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const registerData = req.validated?.body;
+        if (!registerData)
+            return res.status(400).json({ message: "Register data is missing" });
+        const { name, email, password } = registerData;
         const userExists = await userModels_1.default.findOne({ email }).lean(); // I only need to know if this email exist in database or not so I will use lean and it makes faster
         if (userExists) {
             // this is fast and easy check since it is in database we in advance stop
@@ -87,17 +92,17 @@ const registerUsers = async (req, res) => {
                 .json({ message: "User with this email already exists" });
         }
         const message = error instanceof Error ? error.message : String(error);
-        res.status(500).json({ message });
+        return res.status(500).json({ message });
     }
 };
 const loginUsers = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) {
+        const loginData = req.validated?.body;
+        if (!loginData)
             return res
                 .status(400)
-                .json({ status: "fail", message: "Email and password is necessary" });
-        }
+                .json({ status: "fail", message: "login data is missing" });
+        const { email, password } = loginData;
         const user = await userModels_1.default.findOne({ email }).select("+password"); // password will come but typescript might still think undefined so I will write down that case
         const invalidCreds = {
             status: "fail",
@@ -113,24 +118,30 @@ const loginUsers = async (req, res) => {
         const userId = user._id.toString(); // mongoose id
         const accessToken = (0, token_util_1.generateAccessToken)(userId);
         const refreshToken = (0, token_util_1.generateRefreshToken)(userId);
+        // real refresh token now will be hashed for db
+        const hashedRefreshToken = (0, token_util_1.hashToken)(refreshToken);
+        // in user document we only save hashed
+        user.refreshTokenHash = hashedRefreshToken;
+        //  in order to for real written in db this save is necessary
+        await user.save();
         const cookieSameSite = process.env.COOKIE_SAMESITE ??
             "lax";
         //browser refresh cookie-ს მხოლოდ ამ route-ზე გაგზავნის.
         res.cookie("refresh", refreshToken, {
             httpOnly: true, // cookie can not be read by JS (For XSS)
-            secure: process.env.NODE_ENV === "production", //only send on https
+            secure: process.env.NODE_ENV === "production", //only send on https when run on web, now I still have in development so I will use http
             sameSite: cookieSameSite, //CSRF issue solution
             path: "/api/users/refresh",
             maxAge: 7 * 24 * 60 * 60 * 1000, //will live 7 days
         });
-        res.status(200).json({
+        return res.status(200).json({
             status: "success",
             accessToken,
         });
     }
     catch (error) {
         console.error("loginUsers error:", error);
-        res.status(500).json({
+        return res.status(500).json({
             status: "error",
             message: "Internal server error",
         });
@@ -139,16 +150,18 @@ const loginUsers = async (req, res) => {
 const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await userModels_1.default.findByIdAndUpdate(id, req.body, {
+        // instead of req.body we will use already checked and validated body
+        const updateData = req.validated?.body;
+        if (updateData)
+            return res.status(400).json({ message: "Update data is mising" });
+        // now only name and email will be sent in database
+        const user = await userModels_1.default.findByIdAndUpdate(id, updateData, {
             new: true,
             runValidators: true,
-        });
-        if (!user) {
-            return res.status(404).json({ message: "user does not exist" });
-        }
-        else {
-            return res.status(200).json(user);
-        }
+        }).select("-password -refreshTokenHash"); //response sensitive fields closed
+        if (!user)
+            return res.status(404).json({ message: "User does not exist" });
+        return res.status(200).json(user);
     }
     catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -187,16 +200,27 @@ const getUserById = async (req, res) => {
 };
 const explainUsersQuery = async (req, res) => {
     try {
+        const queryData = req.validated?.query;
+        if (!queryData)
+            return res.status(400).json({ message: "Query data is missing" });
         // Added this in order to see if the mongodb really use indexes or not
-        const role = req.query.role;
+        const { search, role } = queryData;
         const filter = {};
-        if (role)
+        if (search?.trim()) {
+            const term = search.trim();
+            filter.$or = [
+                { name: { $regex: term, $options: "i" } },
+                { email: { $regex: term, $options: "i" } },
+            ];
+        }
+        if (role) {
             filter.role = role;
-        const plan = await userModels_1.default.find(filter)
-            .sort({ createdAt: -1 })
-            .limit(10)
-            .explain("executionStats");
-        return res.status(200).json(plan);
+        }
+        const explanation = await userModels_1.default.find(filter).explain("executionStats");
+        return res.status(200).json({
+            filter,
+            explanation,
+        });
     }
     catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -205,7 +229,6 @@ const explainUsersQuery = async (req, res) => {
 };
 const refreshAccessToken = async (req, res) => {
     try {
-        console.log("req.cookies =>", req.cookies); // დროებითი შემოწმება
         const refreshToken = req.cookies?.refresh;
         if (!refreshToken) {
             return res.status(401).json({
@@ -220,6 +243,8 @@ const refreshAccessToken = async (req, res) => {
                 message: "JWT_REFRESH_SECRET is missing",
             });
         }
+        const cookieSameSite = process.env.COOKIE_SAMESITE ??
+            "lax";
         //checking refresh token with it's secret signature
         const decoded = jsonwebtoken_1.default.verify(refreshToken, refreshSecret);
         if (decoded.type !== "refresh") {
@@ -228,16 +253,52 @@ const refreshAccessToken = async (req, res) => {
                 message: "Invalid token type",
             });
         }
-        // chekc if user still exists
-        const user = await userModels_1.default.findById(decoded.id).select("-password").lean();
+        // brought user's relevant refreshTokenHash
+        const user = await userModels_1.default.findById(decoded.id).select("+refreshTokenHash -password"); // in standard we have not selected refreshTokenHash so I wrote + as for password , it might forget that it does not have to bring so I added in case
         if (!user) {
             return res.status(401).json({
                 status: "fail",
                 message: "User not found",
             });
         }
-        // new access token generate
+        if (!user.refreshTokenHash) {
+            return res.status(401).json({
+                status: "fail",
+                message: "Refresh token is not active",
+            });
+        }
+        // real refresh token is hashed here (from cookie)
+        const incomingRefreshTokenHash = (0, token_util_1.hashToken)(refreshToken);
+        // here we will check refreshTokenHash with refreshToken
+        // if hash does not mach this token must not be considered safe
+        if (incomingRefreshTokenHash !== user.refreshTokenHash) {
+            user.refreshTokenHash = null; //refresh session canceled
+            await user.save();
+            res.clearCookie("refresh", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: cookieSameSite,
+                path: "/api/users/refresh",
+            });
+            return res.status(401).json({
+                status: "fail",
+                message: "Refresh token reuse detected. Please log in again",
+            });
+        }
+        // this time done no rotation yes so I will add access token return
         const newAccessToken = (0, token_util_1.generateAccessToken)(user._id.toString());
+        // this time will ad refresh token as well
+        const newRefreshToken = (0, token_util_1.generateRefreshToken)(user._id.toString());
+        const newHashedRefreshToken = (0, token_util_1.hashToken)(newRefreshToken); // new refresh token hash
+        user.refreshTokenHash = newHashedRefreshToken; // on db old hash changed by new
+        await user.save(); // new hash is saved in real in db
+        res.cookie("refresh", newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: cookieSameSite,
+            path: "/api/users/refresh",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
         // refresh endpoint only return's access token currently
         return res.status(200).json({
             status: "success",
@@ -253,6 +314,43 @@ const refreshAccessToken = async (req, res) => {
         });
     }
 };
+// logout endpoint
+const logout = async (req, res) => {
+    try {
+        const cookieSameSite = process.env.COOKIE_SAMESITE ??
+            "lax";
+        // from procect middleware we know which user logs out
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(401).json({
+                status: "fail",
+                message: "Not authorized",
+            });
+        }
+        // by this on logout saved db refresh token hash will become null
+        await userModels_1.default.findByIdAndUpdate(userId, {
+            $set: { refreshTokenHash: null },
+        });
+        // refresh cookie will be deleted from brower
+        res.clearCookie("refresh", {
+            httpOnly: true, //same cookie type
+            secure: process.env.NODE_ENV === "production",
+            sameSite: cookieSameSite,
+            path: "/api/users/refresh",
+        });
+        return res.status(200).json({
+            status: "success",
+            message: "Logged out succesfully",
+        });
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({
+            status: "error",
+            message,
+        });
+    }
+};
 exports.default = {
     getUsers,
     registerUsers,
@@ -262,4 +360,5 @@ exports.default = {
     getUserById,
     explainUsersQuery,
     refreshAccessToken,
+    logout,
 };

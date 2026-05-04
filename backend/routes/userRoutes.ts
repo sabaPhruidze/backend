@@ -49,6 +49,7 @@ router.get(
   "/debug/explain",
   protect,
   restrictTo("admin"),
+  validate(userQuerySchema, "query", "Query validation error"),
   userController.explainUsersQuery,
 );
 

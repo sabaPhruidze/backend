@@ -102,7 +102,7 @@ const registerUsers = async (req: Request, res: Response) => {
         .json({ message: "User with this email already exists" });
     }
     const message = error instanceof Error ? error.message : String(error);
-    res.status(500).json({ message });
+    return res.status(500).json({ message });
   }
 };
 const loginUsers = async (req: Request, res: Response): Promise<Response> => {
@@ -151,13 +151,13 @@ const loginUsers = async (req: Request, res: Response): Promise<Response> => {
       path: "/api/users/refresh",
       maxAge: 7 * 24 * 60 * 60 * 1000, //will live 7 days
     });
-    res.status(200).json({
+    return res.status(200).json({
       status: "success",
       accessToken,
     });
   } catch (error: unknown) {
     console.error("loginUsers error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       status: "error",
       message: "Internal server error",
     });
@@ -211,17 +211,33 @@ const getUserById = async (req: Request, res: Response) => {
     return res.status(500).json({ message });
   }
 };
-const explainUsersQuery = async (req: Request, res: Response) => {
+const explainUsersQuery = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
   try {
+    const queryData = req.validated?.query as UserQuery | undefined;
+    if (!queryData)
+      return res.status(400).json({ message: "Query data is missing" });
     // Added this in order to see if the mongodb really use indexes or not
-    const role = req.query.role as string | undefined;
+    const { search, role } = queryData;
+
     const filter: Record<string, any> = {};
-    if (role) filter.role = role;
-    const plan = await User.find(filter)
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .explain("executionStats");
-    return res.status(200).json(plan);
+    if (search?.trim()) {
+      const term = search.trim();
+      filter.$or = [
+        { name: { $regex: term, $options: "i" } },
+        { email: { $regex: term, $options: "i" } },
+      ];
+    }
+    if (role) {
+      filter.role = role;
+    }
+    const explanation = await User.find(filter).explain("executionStats");
+    return res.status(200).json({
+      filter,
+      explanation,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     return res.status(500).json({ message });

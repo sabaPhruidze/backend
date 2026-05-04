@@ -28,7 +28,7 @@ const userSchema = new Schema(
     refreshTokenHash: {
       // original refresh token will be save independently
       type: String,
-      default: [],
+      default: null, // refreshTokenHash is string or null
       select: false, // defaultly it does not have to return as password.
     },
   },

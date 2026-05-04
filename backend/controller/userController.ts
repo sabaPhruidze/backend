@@ -120,7 +120,7 @@ const loginUsers = async (req: Request, res: Response): Promise<Response> => {
       return res
         .status(400)
         .json({ status: "fail", message: "login data is missing" });
-    const { email, password } = req.body as LoginBody;
+    const { email, password } = loginData;
 
     const user = await User.findOne({ email }).select("+password"); // password will come but typescript might still think undefined so I will write down that case
     const invalidCreds = {
@@ -176,7 +176,7 @@ const updateUser = async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
 
     // instead of req.body we will use already checked and validated body
-    const updateData = req.validated.body as UpdateUserBody | undefined;
+    const updateData = req.validated?.body as UpdateUserBody | undefined;
     if (updateData)
       return res.status(400).json({ message: "Update data is mising" });
     // now only name and email will be sent in database

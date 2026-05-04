@@ -30,7 +30,7 @@ export const allowSelfOrAdmin = (
     });
   }
   //   admin is allowed to do whatever he want's on user
-  if (req.user.name === "admin") {
+  if (req.user.role === "admin") {
     return next();
   }
   // from route we receive the user id on which it act's

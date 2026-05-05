@@ -1,4 +1,9 @@
 import type { Request, Response } from "express";
+import {
+  REFRESH_COOKIE_NAME,
+  getRefreshCookieOptions,
+  getClearRefreshCookieOptions,
+} from "../utils/cookie-options";
 import jwt from "jsonwebtoken";
 import User from "../models/userModels";
 import {
@@ -139,18 +144,7 @@ const loginUsers = async (req: Request, res: Response): Promise<Response> => {
     //  in order to for real written in db this save is necessary
     await user.save();
 
-    const cookieSameSite =
-      (process.env.COOKIE_SAMESITE as "lax" | "strict" | "none" | undefined) ??
-      "lax";
-
-    //browser refresh cookie-ს მხოლოდ ამ route-ზე გაგზავნის.
-    res.cookie("refresh", refreshToken, {
-      httpOnly: true, // cookie can not be read by JS (For XSS)
-      secure: process.env.NODE_ENV === "production", //only send on https when run on web, now I still have in development so I will use http
-      sameSite: cookieSameSite, //CSRF issue solution
-      path: "/api/users/refresh",
-      maxAge: 7 * 24 * 60 * 60 * 1000, //will live 7 days
-    });
+    res.cookie(REFRESH_COOKIE_NAME, refreshToken, getRefreshCookieOptions());
     return res.status(200).json({
       status: "success",
       accessToken,
@@ -307,12 +301,7 @@ const refreshAccessToken = async (
     if (incomingRefreshTokenHash !== user.refreshTokenHash) {
       user.refreshTokenHash = null; //refresh session canceled
       await user.save();
-      res.clearCookie("refresh", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: cookieSameSite,
-        path: "/api/users/refresh",
-      });
+      res.clearCookie(REFRESH_COOKIE_NAME, getClearRefreshCookieOptions());
       return res.status(401).json({
         status: "fail",
         message: "Refresh token reuse detected. Please log in again",
@@ -326,13 +315,7 @@ const refreshAccessToken = async (
     user.refreshTokenHash = newHashedRefreshToken; // on db old hash changed by new
     await user.save(); // new hash is saved in real in db
 
-    res.cookie("refresh", newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: cookieSameSite,
-      path: "/api/users/refresh",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, getRefreshCookieOptions());
     // refresh endpoint only return's access token currently
     return res.status(200).json({
       status: "success",
@@ -369,12 +352,7 @@ const logout = async (req: Request, res: Response): Promise<Response> => {
       $set: { refreshTokenHash: null },
     });
     // refresh cookie will be deleted from brower
-    res.clearCookie("refresh", {
-      httpOnly: true, //same cookie type
-      secure: process.env.NODE_ENV === "production",
-      sameSite: cookieSameSite,
-      path: "/api/users/refresh",
-    });
+    res.clearCookie(REFRESH_COOKIE_NAME, getClearRefreshCookieOptions());
     return res.status(200).json({
       status: "success",
       message: "Logged out succesfully",

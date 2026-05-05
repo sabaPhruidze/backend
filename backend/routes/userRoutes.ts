@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import userController from "../controller/userController";
+import { authRateLimiter } from "../middleware/rateLimitMiddleware";
 
 import {
   loginSchema,
@@ -19,11 +20,13 @@ const router = Router();
 
 router.post(
   "/login",
+  authRateLimiter, //brute force protection
   validate(loginSchema, "body", "Validation Errors"),
   userController.loginUsers,
 );
 router.post(
   "/register",
+  authRateLimiter,
   validate(registerSchema, "body", "Validation Errors"),
   userController.registerUsers,
 );
